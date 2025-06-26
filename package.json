@@ -33,10 +33,7 @@
         "prepare": "npm run build",
         "test": "jest",
         "dev": "ts-node src/index.ts",
-        "test:wallet": "ts-node tests/test-wallet-tools.ts",
-        "setup:wallet": "ts-node scripts/setup-wallet.ts",
-        "wallet:generate": "ts-node scripts/generate-wallet.ts",
-        "wallet:check": "ts-node scripts/check-wallet.ts"
+        "wallet:generate": "ts-node scripts/generate-wallet.ts"
     },
     "repository": {
         "type": "git",

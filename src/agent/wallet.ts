@@ -40,4 +40,23 @@ export class WalletAgent {
         console.error('🔌 Disconnected from the network');
     }
 
+    async getWalletInfo(): Promise<any> {
+        try {
+            const balance = await this.publicClient.getBalance({
+                address: this.account.address
+            });
+
+            return {
+                address: this.account.address,
+                balance: balance.toString(),
+                network: this.network,
+                chainId: await this.publicClient.getChainId(),
+                blockExplorer: this.networkInfo.blockExplorer
+            };
+        } catch (error) {
+            console.error('Failed to get wallet info:', error);
+            throw error;
+        }
+    }
+
 }

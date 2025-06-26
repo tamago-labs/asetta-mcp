@@ -1,25 +1,27 @@
- 
+import { GetWalletInfoTool } from "./wallet/get_wallet_info_tool";
+import { GetAccountBalancesTool } from "./wallet/get_account_balances_tool";
+import { SendETHTool } from "./wallet/send_eth_tool";
+import { SendTokenTool } from "./wallet/send_token_tool";
+import { ApproveTokenTool } from "./wallet/approve_token_tool";
+import { CheckAllowanceTool } from "./wallet/check_allowance_tool";
+import { GetTokenInfoTool } from "./wallet/get_token_info_tool";
+import { GetTransactionHistoryTool } from "./wallet/get_transaction_history_tool"; 
 
 export const AsettaWalletTools = {
 
     // Basic wallet information and account management
-    // "GetWalletInfoTool": GetWalletInfoTool,                    // Get wallet address, balance, network info
-    // "GetAccountBalancesTool": GetAccountBalancesTool,          // Get ETH, WIP, IP token balances
-    // "ValidateAddressTool": ValidateAddressTool,                // Validate Ethereum addresses
-    // "GetTransactionHistoryTool": GetTransactionHistoryTool,    // View recent transaction history
+    "GetWalletInfoTool": GetWalletInfoTool,                    // Get wallet address, balance, network info
+    "GetAccountBalancesTool": GetAccountBalancesTool,          // Get current balances 
+    "GetTransactionHistoryTool": GetTransactionHistoryTool,    // View recent transaction history
 
     // Token and ETH operations
-    // "SendETHTool": SendETHTool,                                // Send ETH for gas fees
-    // "SendTokenTool": SendTokenTool,                            // Send WIP, IP, or other tokens
+    "SendETHTool": SendETHTool,                                // Send AVAX 
+    "SendTokenTool": SendTokenTool,                            // Send other tokens
 
-    // // EVM-specific token operations
-    // "ApproveTokenTool": ApproveTokenTool,                      // Approve tokens for Story Protocol contracts
-    // "CheckAllowanceTool": CheckAllowanceTool,                  // Check token allowances for contracts
-    // "GetTokenInfoTool": GetTokenInfoTool,                      // Get comprehensive ERC20 token information
-
-    // // Story Protocol token operations
-    // "WrapIPTool": WrapIPTool,                                  // Wrap IP tokens to WIP (like WETH)
-    // "UnwrapWIPTool": UnwrapWIPTool,                            // Unwrap WIP tokens back to IP
+    // EVM-specific token operations
+    "ApproveTokenTool": ApproveTokenTool,                      // Approve tokens for Story Protocol contracts
+    "CheckAllowanceTool": CheckAllowanceTool,                  // Check token allowances for contracts
+    "GetTokenInfoTool": GetTokenInfoTool,                      // Get comprehensive ERC20 token information
 
     // // IP Registration & Management
     // "RegisterIPTool": RegisterIPTool,                       // ✅ Register IP from URLs or metadata
@@ -35,8 +37,6 @@ export const AsettaWalletTools = {
     // // License Token Operations
     // "MintLicenseTool": MintLicenseTool,                     // ✅ Mint license tokens for purchase 
 
-    // // Platform Generation
-    // "GenerateShowcasePlatformTool": GenerateShowcasePlatformTool, // ✅ Generate complete IP showcase platform
 };
 
 export const AsettaApiTools = {
