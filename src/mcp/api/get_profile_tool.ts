@@ -3,28 +3,18 @@ import { ApiAgent } from "../../agent/api";
 import { type McpTool } from "../../types";
 import { accessKey } from "../../config";
 
-const GetProfileSchema = z.object({
-    access_key: z.string().optional().describe("Access key for API authentication (optional, uses default from config if not provided)")
-});
-
 export const GetProfileTool: McpTool = {
     name: "asetta_get_profile",
     description: "Get user profile information from Asetta API",
     schema: {
-        type: "object",
-        properties: {
-            access_key: {
-                type: "string",
-                description: "Access key for API authentication (optional, uses default from config if not provided)"
-            }
-        }
+        access_key: z.string()
+            .optional()
+            .describe("Access key for API authentication (optional, uses default from config if not provided)")
     },
     handler: async (agent: ApiAgent, input: Record<string, any>) => {
         try {
-            const parsed = GetProfileSchema.parse(input);
-
             // Use provided access_key or fall back to config
-            const apiAccessKey = parsed.access_key || accessKey;
+            const apiAccessKey = input.access_key || accessKey;
 
             if (!apiAccessKey) {
                 throw new Error("Access key is required. Provide it as parameter or set --access_key when starting the agent.");

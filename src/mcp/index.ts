@@ -6,9 +6,12 @@ import { ApproveTokenTool } from "./wallet/approve_token_tool";
 import { CheckAllowanceTool } from "./wallet/check_allowance_tool";
 import { GetTokenInfoTool } from "./wallet/get_token_info_tool";
 import { GetTransactionHistoryTool } from "./wallet/get_transaction_history_tool";
+import { CreateRwaTokenTool } from "./wallet/create_rwa_token_tool";
+import { GetRwaProjectTool } from "./wallet/get_rwa_project_tool";
 import { GetProfileTool } from "./api/get_profile_tool";
 import { CreateRwaProjectTool } from "./api/create_rwa_project_tool";
-import { GetRwaProjectsTool } from "./api/get_rwa_projects_tool"; 
+import { GetRwaProjectsTool } from "./api/get_rwa_projects_tool";
+import { UpdateProjectStatusTool } from "./api/update_project_status_tool"; 
 
 export const AsettaWalletTools = {
 
@@ -25,6 +28,10 @@ export const AsettaWalletTools = {
     "ApproveTokenTool": ApproveTokenTool,                      // Approve tokens for Story Protocol contracts
     "CheckAllowanceTool": CheckAllowanceTool,                  // Check token allowances for contracts
     "GetTokenInfoTool": GetTokenInfoTool,                      // Get comprehensive ERC20 token information
+
+    // RWA Token Operations
+    "GetRwaProjectTool": GetRwaProjectTool, 
+    "UpdateProjectStatusTool": UpdateProjectStatusTool        
 
     // // IP Registration & Management
     // "RegisterIPTool": RegisterIPTool,                       // ✅ Register IP from URLs or metadata
@@ -44,6 +51,7 @@ export const AsettaWalletTools = {
 
 export const AsettaApiTools = {
     "GetProfileTool": GetProfileTool,
-    "CreateRwaProjectTool": CreateRwaProjectTool,
-    "GetRwaProjectsTool": GetRwaProjectsTool
+    "CreateRwaProjectTool": CreateRwaProjectTool, // Create RWA token and complete project on blockchain
+    "GetRwaProjectsTool": GetRwaProjectsTool, // Get RWA project details from smart contract
+    "UpdateProjectStatusTool": UpdateProjectStatusTool 
 } 
