@@ -19,41 +19,41 @@ function createMcpServer(agent: WalletAgent | ApiAgent) {
         version: "0.1.0"
     });
 
-    const finalTools = agentMode === "tokenization" ? AsettaWalletTools : AsettaApiTools
+    const finalTools = agentMode === "tokenization" ? AsettaWalletTools : AsettaApiTools;
 
     // Register all tools
-    // for (const [_key, tool] of Object.entries(finalTools)) {
-    //     server.tool(tool.name, tool.description, tool.schema, async (params: any): Promise<any> => {
-    //         try {
-    //             // Execute the handler with the params directly
-    //             const result = await tool.handler(agent, params);
+    for (const [_key, tool] of Object.entries(finalTools)) {
+        server.tool(tool.name, tool.description, tool.schema, async (params: any): Promise<any> => {
+            try {
+                // Execute the handler with the params directly
+                const result = await tool.handler(agent, params);
 
-    //             // Format the result as MCP tool response
-    //             return {
-    //                 content: [
-    //                     {
-    //                         type: "text",
-    //                         text: JSON.stringify(result, null, 2),
-    //                     },
-    //                 ],
-    //             };
-    //         } catch (error) {
-    //             console.error("Tool execution error:", error);
-    //             // Handle errors in MCP format
-    //             return {
-    //                 isError: true,
-    //                 content: [
-    //                     {
-    //                         type: "text",
-    //                         text: error instanceof Error
-    //                             ? error.message
-    //                             : "Unknown error occurred",
-    //                     },
-    //                 ],
-    //             };
-    //         }
-    //     });
-    // }
+                // Format the result as MCP tool response
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: JSON.stringify(result, null, 2),
+                        },
+                    ],
+                };
+            } catch (error) {
+                console.error("Tool execution error:", error);
+                // Handle errors in MCP format
+                return {
+                    isError: true,
+                    content: [
+                        {
+                            type: "text",
+                            text: error instanceof Error
+                                ? error.message
+                                : "Unknown error occurred",
+                        },
+                    ],
+                };
+            }
+        });
+    }
 
     return server;
 }
@@ -74,7 +74,6 @@ async function main() {
         await server.connect(transport);
 
         console.error("✅ Asetta MCP Server is running!");
-
 
     } catch (error) {
         console.error('❌ Error starting Asetta MCP server:', error);

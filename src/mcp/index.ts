@@ -5,7 +5,8 @@ import { SendTokenTool } from "./wallet/send_token_tool";
 import { ApproveTokenTool } from "./wallet/approve_token_tool";
 import { CheckAllowanceTool } from "./wallet/check_allowance_tool";
 import { GetTokenInfoTool } from "./wallet/get_token_info_tool";
-import { GetTransactionHistoryTool } from "./wallet/get_transaction_history_tool"; 
+import { GetTransactionHistoryTool } from "./wallet/get_transaction_history_tool";
+import { GetProfileTool } from "./api/get_profile_tool"; 
 
 export const AsettaWalletTools = {
 
@@ -40,5 +41,5 @@ export const AsettaWalletTools = {
 };
 
 export const AsettaApiTools = {
-
+    "GetProfileTool": GetProfileTool
 } 

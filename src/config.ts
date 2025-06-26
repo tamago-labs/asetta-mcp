@@ -80,7 +80,13 @@ const getMode = (): any => {
     return args.agent_mode
 }
 
+const getAccessKey = (): string | undefined => {
+    const args = getArgs();
+    return args.access_key;
+}
+
 export const agentMode: any = getMode()
+export const accessKey: string | undefined = getAccessKey()
 
 const baseConfig = {
     chain: networkInfo.chain,
@@ -112,6 +118,10 @@ export function validateEnvironment(): void {
             console.error(`📍 RPC URL: ${networkInfo.rpcProviderUrl}`);
             getAccount()
             console.error(`📍 Account: ${account.address}`);
+        }
+        
+        if (args.access_key) {
+            console.error(`📍 Access Key: ${args.access_key}`);
         }
 
     } catch (error) {
