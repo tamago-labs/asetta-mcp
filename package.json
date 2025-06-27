@@ -1,6 +1,6 @@
 {
     "name": "@tamago-labs/asetta-mcp",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "MCP libraries for AI agents on the Asetta.xyz platform, enabling RWA project creation and multi-chain token issuance (currently Avalaunch only)",
     "main": "dist/index.js",
     "module": "./dist/index.mjs",
@@ -26,7 +26,9 @@
         "smart contracts",
         "asset onboarding",
         "RWA infrastructure",
-        "decentralized finance"
+        "decentralized finance",
+        "chainlink",
+        "CCIP"
     ],
     "scripts": {
         "build": "tsup",

@@ -7,6 +7,9 @@ export const CreateRwaProjectTool: McpTool = {
     name: "asetta_create_rwa_project",
     description: "Create a new RWA (Real World Asset) project on Asetta platform",
     schema: {
+        access_key: z.string()
+            .optional()
+            .describe("Access key for API authentication (optional, uses default from config if not provided)"),
         // Required fields
         name: z.string()
             .describe("Project name (e.g., 'Tokyo Shibuya Prime Office Tower')"),
@@ -57,13 +60,13 @@ export const CreateRwaProjectTool: McpTool = {
     handler: async (agent: ApiAgent, input: Record<string, any>) => {
         try { 
             // Use provided access_key or fall back to config
-            const apiAccessKey = accessKey;
+            const apiAccessKey = input.access_key || accessKey;
             
             if (!apiAccessKey) {
                 throw new Error("Access key is required. Provide it as parameter or set --access_key when starting the agent.");
             }
 
-            const apiUrl = "https://asetta.xyz/api/project"; 
+            const apiUrl = "https://www.asetta.xyz/api/project";  
             
             const requestBody = {
                 accessKey: apiAccessKey,

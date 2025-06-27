@@ -31,22 +31,8 @@ export const AsettaWalletTools = {
 
     // RWA Token Operations
     "GetRwaProjectTool": GetRwaProjectTool, 
-    "UpdateProjectStatusTool": UpdateProjectStatusTool        
-
-    // // IP Registration & Management
-    // "RegisterIPTool": RegisterIPTool,                       // ✅ Register IP from URLs or metadata
-    // "GetIPInfoTool": GetIPInfoTool,                         // ✅ Get IP asset details and metadata
-    // // "MintAndRegisterIPTool": MintAndRegisterIPTool,         // Mint NFT + register IP in one tx
-    // // "BatchRegisterTool": BatchRegisterTool,                 // Register multiple IP assets
-
-    // // License Terms & Management  
-    // "CreateLicenseTermsTool": CreateLicenseTermsTool,       // ✅ AI-powered license term creation
-    // "AttachLicenseTool": AttachLicenseTool,                 // ✅ Attach license terms to IP
-    // // "GetLicenseTermsTool": GetLicenseTermsTool,             // View available license terms
-
-    // // License Token Operations
-    // "MintLicenseTool": MintLicenseTool,                     // ✅ Mint license tokens for purchase 
-
+    "UpdateProjectStatusTool": UpdateProjectStatusTool,
+    "CreateRwaTokenTool" : CreateRwaTokenTool, 
 };
 
 export const AsettaApiTools = {

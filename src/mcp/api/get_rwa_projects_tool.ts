@@ -31,7 +31,7 @@ export const GetRwaProjectsTool: McpTool = {
                 params.append('project_id', input.project_id);
             }
 
-            const apiUrl = `https://asetta.xyz/api/project?${params.toString()}`;
+            const apiUrl = `https://www.asetta.xyz/api/project?${params.toString()}`;
             
             const response = await fetch(apiUrl, {
                 method: 'GET',

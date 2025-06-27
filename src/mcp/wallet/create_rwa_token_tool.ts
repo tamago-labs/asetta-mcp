@@ -108,15 +108,15 @@ export const CreateRwaTokenTool: McpTool = {
 
             console.error(`Transaction confirmed in block ${receipt.blockNumber}`);
 
-            // Find ProjectCreated event to get project ID
-            let projectId: bigint | undefined;
+            // Find ProjectCreated event to get smart contract ID
+            let smartContractId: bigint | undefined;
 
             for (const log of receipt.logs) {
                 try {
                     if (log.topics[0] === '0x' + '808c10407f796034c5da8d075c2de0412dfad2b0a3ab5b9b2c5d1b7c8eee1c2') { // ProjectCreated event signature
                         // Extract project ID from event data (first 32 bytes)
                         const projectIdHex = log.data.slice(0, 66); // 0x + 64 chars
-                        projectId = BigInt(projectIdHex);
+                        smartContractId = BigInt(projectIdHex);
                         break;
                     }
                 } catch (e) {
@@ -129,7 +129,7 @@ export const CreateRwaTokenTool: McpTool = {
                 message: "✅ RWA Token and project created successfully on Avalanche",
                 transaction_hash: txHash,
                 block_number: receipt.blockNumber.toString(),
-                project_id: projectId?.toString() || "Check transaction logs",
+                smart_contract_id: smartContractId?.toString() || "Check transaction logs",
                 contract_addresses: {
                     coordinator: COORDINATOR_ADDRESS,
                     explorer_link: `https://testnet.snowtrace.io/tx/${txHash}`
@@ -148,25 +148,7 @@ export const CreateRwaTokenTool: McpTool = {
                     "⚡ Run: asetta_update_project_status to link contracts to AWS Amplify project",
                     "🎯 Set status to 'ACTIVE' to make project available for investors",
                     "💰 Investors can now purchase tokens through Primary Sales contract"
-                ],
-                update_command: {
-                    mode: "--agent_mode=legal",
-                    tool: "asetta_update_project_status",
-                    sample_params: {
-                        project_id: "YOUR_AMPLIFY_PROJECT_ID",
-                        status: "ACTIVE",
-                        smart_contract_id: projectId?.toString() || "Check transaction logs",
-                        token_address: "Check explorer link above",
-                        primary_sales_address: "Check explorer link above",
-                        vault_address: "Check explorer link above",
-                        rfq_address: "Check explorer link above",
-                        coordinator_address: COORDINATOR_ADDRESS,
-                        network: "avalanche-fuji",
-                        blockchain_tx_hash: txHash,
-                        block_number: receipt.blockNumber.toString(),
-                        deployed_at: new Date().toISOString()
-                    }
-                }
+                ]
             };
 
             return result;

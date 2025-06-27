@@ -20,7 +20,7 @@ export const GetProfileTool: McpTool = {
                 throw new Error("Access key is required. Provide it as parameter or set --access_key when starting the agent.");
             }
 
-            const apiUrl = `https://asetta.xyz/api/profile?access_key=${apiAccessKey}`;
+            const apiUrl = `https://www.asetta.xyz/api/profile?access_key=${apiAccessKey}`;
 
             const response = await fetch(apiUrl, {
                 method: 'GET',

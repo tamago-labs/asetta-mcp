@@ -53,10 +53,11 @@ export const UpdateProjectStatusTool: McpTool = {
             if (!apiAccessKey) {
                 throw new Error("Access key is required. Provide it as parameter or set --access_key when starting the agent.");
             }
-
-            const apiUrl = `https://asetta.xyz/api/project/${input.project_id}`;
+ 
+            const apiUrl = `https://www.asetta.xyz/api/updateProject`
             
-            const requestBody: any = {
+            let requestBody: any = {
+                projectId: input.project_id,
                 accessKey: apiAccessKey,
                 status: input.status
             };
