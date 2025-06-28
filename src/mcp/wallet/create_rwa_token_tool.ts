@@ -170,11 +170,12 @@ export const CreateRwaTokenTool: McpTool = {
                 gas_used: receipt.gasUsed.toString(),
                 next_steps: [
                     `✅ Step 1 Complete: RWA Token created on ${walletAgent.network}`,
-                    "🔗 Step 2: Configure CCIP cross-chain functionality",
-                    "🪙 Step 3: Mint tokens on desired chains",
+                    "🔗 Step 2: Deploy token on other chains (if needed)",
+                    "📝 Note: If you want multi-chain support, deploy this token on other networks",
+                    "🌐 Step 3: Configure CCIP cross-chain functionality",
                     "📊 Step 4: Mark CCIP as configured in RWAManager",
                     "🎯 Step 5: Register for primary sales distribution",
-                    "💰 Final: Activate primary sales for public purchases"
+                    "💰 Step 6: Activate primary sales for public purchases"
                 ],
                 important_notes: [
                     "⚠️ This is a multi-step process with the new architecture",
