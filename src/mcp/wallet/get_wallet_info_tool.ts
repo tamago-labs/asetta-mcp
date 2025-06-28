@@ -1,44 +1,54 @@
 import { z } from "zod";
 import { WalletAgent } from "../../agent/wallet";
 import { type McpTool } from "../../types";
+import { type NetworkType } from "../../config";
 
 export const GetWalletInfoTool: McpTool = {
     name: "asetta_get_wallet_info",
     description: "Get wallet address and basic account information",
-    schema: {},
+    schema: {
+        network: z.enum(['avalancheFuji', 'ethereumSepolia', 'arbitrumSepolia'])
+            .optional()
+            .describe("Network to check (optional, defaults to configured network)")
+    },
     handler: async (agent: WalletAgent, input: Record<string, any>) => {
         try {
-            await agent.connect();
+            const networkType = input.network as NetworkType;
+            const walletAgent = networkType ? new WalletAgent(networkType) : agent;
+            
+            await walletAgent.connect();
  
-            const balance = await agent.publicClient.getBalance({
-                address: agent.account.address
+            const balance = await walletAgent.publicClient.getBalance({
+                address: walletAgent.account.address
             });
 
-            const balanceInETH = Number(balance) / 1e18;
+            const balanceInNative = Number(balance) / 1e18;
+            const nativeCurrency = walletAgent.networkInfo.nativeCurrency;
 
             return {
                 status: "success",
                 message: "✅ Wallet information retrieved successfully",
                 wallet_details: {
-                    address: agent.account.address,
-                    network: agent.network,
-                    balance: `${balanceInETH.toFixed(6)} AVAX`,
+                    address: walletAgent.account.address,
+                    network: walletAgent.network,
+                    balance: `${balanceInNative.toFixed(6)} ${nativeCurrency}`,
                     balance_in_wei: balance.toString(),
-                    chain_id: await agent.publicClient.getChainId(),
-                    block_explorer: agent.networkInfo.blockExplorer
+                    chain_id: await walletAgent.publicClient.getChainId(),
+                    block_explorer: walletAgent.networkInfo.blockExplorer,
+                    native_currency: nativeCurrency
                 },
                 account_status: {
                     activated: true,
-                    minimum_balance_required: "0.01 AVAX",
-                    can_register_rwa: balanceInETH >= 0.01,
-                    ready_for_operations: balanceInETH >= 0.001
+                    minimum_balance_required: `0.01 ${nativeCurrency}`,
+                    can_register_rwa: balanceInNative >= 0.01,
+                    ready_for_operations: balanceInNative >= 0.001
                 },
-                recommendations: balanceInETH < 0.01
+                recommendations: balanceInNative < 0.01
                     ? [
-                        "⚠️ Low AVAX balance detected",
-                        "Fund wallet with at least 0.01 AVAX for RWA registration",
+                        `⚠️ Low ${nativeCurrency} balance detected`,
+                        `Fund wallet with at least 0.01 ${nativeCurrency} for RWA registration`,
                         "Gas fees required for all Asetta Protocol operations",
-                        `Current balance: ${balanceInETH.toFixed(6)} AVAX`
+                        `Current balance: ${balanceInNative.toFixed(6)} ${nativeCurrency}`
                     ]
                     : [
                         "✅ Wallet has sufficient balance for operations",

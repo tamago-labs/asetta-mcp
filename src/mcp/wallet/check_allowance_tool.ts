@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { WalletAgent } from "../../agent/wallet";
 import { type McpTool } from "../../types";
-import { Address, formatEther } from "viem"; 
+import { Address, formatEther } from "viem";
+import { type NetworkType } from "../../config"; 
 
 export const CheckAllowanceTool: McpTool = {
     name: "asetta_check_allowance",
@@ -16,14 +17,20 @@ export const CheckAllowanceTool: McpTool = {
             .describe("Token owner address (optional, defaults to wallet address)"),
         spender: z.string()
             .regex(/^0x[0-9a-fA-F]{40}$/)
-            .describe("Spender contract address to check allowance for")
+            .describe("Spender contract address to check allowance for"),
+        network: z.enum(['avalancheFuji', 'ethereumSepolia', 'arbitrumSepolia'])
+            .optional()
+            .describe("Network to check (optional, defaults to configured network)")
     },
     handler: async (agent: WalletAgent, input: Record<string, any>) => {
         try {
-            await agent.connect();
+            const networkType = input.network as NetworkType;
+            const walletAgent = networkType ? new WalletAgent(networkType) : agent;
+            
+            await walletAgent.connect();
 
             let tokenAddress = input.token_address as Address;
-            const owner = (input.owner || agent.account.address) as Address;
+            const owner = (input.owner || walletAgent.account.address) as Address;
             const spender = input.spender as Address;
             
             // ERC20 ABI for allowance operations
@@ -70,29 +77,29 @@ export const CheckAllowanceTool: McpTool = {
 
             // Get token info and allowance
             const [allowance, balance, symbol, decimals, name] = await Promise.all([
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'allowance',
                     args: [owner, spender]
                 }) as Promise<bigint>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'balanceOf',
                     args: [owner]
                 }) as Promise<bigint>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'symbol'
                 }) as Promise<string>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'decimals'
                 }) as Promise<number>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'name'
@@ -162,7 +169,7 @@ export const CheckAllowanceTool: McpTool = {
                 },
                 contract_info: { 
                     spender_contract: spender,
-                    is_own_wallet: owner.toLowerCase() === agent.account.address.toLowerCase()
+                    is_own_wallet: owner.toLowerCase() === walletAgent.account.address.toLowerCase()
                 },
                 operational_status: {
                     needs_approval: needsApproval,
@@ -171,9 +178,11 @@ export const CheckAllowanceTool: McpTool = {
                     approval_sufficient: canSpendBalance || isUnlimited
                 },
                 network_info: {
-                    network: agent.network,
-                    block_explorer: agent.networkInfo.blockExplorer,
-                    token_explorer_url: `${agent.networkInfo.blockExplorer}/token/${tokenAddress}`
+                    network: walletAgent.network,
+                    chain_id: walletAgent.networkInfo.chainId,
+                    native_currency: walletAgent.networkInfo.nativeCurrency,
+                    block_explorer: walletAgent.networkInfo.blockExplorer,
+                    token_explorer_url: `${walletAgent.networkInfo.blockExplorer}/token/${tokenAddress}`
                 },
                 recommendations: getRecommendations(),
                 next_steps: needsApproval 

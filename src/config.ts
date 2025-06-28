@@ -1,8 +1,8 @@
 import { Chain, createPublicClient, createWalletClient, http, WalletClient } from 'viem';
 import { privateKeyToAccount, Address, Account, generatePrivateKey } from 'viem/accounts';
-import { avalancheFuji } from 'viem/chains'
+import { avalancheFuji, sepolia, arbitrumSepolia } from 'viem/chains'
 
-type NetworkType = 'avalancheFuji'
+type NetworkType = 'avalancheFuji' | 'ethereumSepolia' | 'arbitrumSepolia'
 
 type AgentMode = 'legal' | 'tokenization';
 
@@ -10,6 +10,8 @@ interface NetworkConfig {
     rpcProviderUrl: string;
     blockExplorer: string;
     chain: Chain;
+    chainId: number;
+    nativeCurrency: string;
 }
 
 const getArgs = () =>
@@ -37,13 +39,29 @@ const networkConfigs: Record<NetworkType, NetworkConfig> = {
     avalancheFuji: {
         rpcProviderUrl: 'https://avalanche-fuji.drpc.org',
         blockExplorer: 'https://testnet.snowtrace.io',
-        chain: avalancheFuji
+        chain: avalancheFuji,
+        chainId: 43113,
+        nativeCurrency: 'AVAX'
+    },
+    ethereumSepolia: {
+        rpcProviderUrl: 'https://sepolia.drpc.org',
+        blockExplorer: 'https://sepolia.etherscan.io',
+        chain: sepolia,
+        chainId: 11155111,
+        nativeCurrency: 'ETH'
+    },
+    arbitrumSepolia: {
+        rpcProviderUrl: 'https://arbitrum-sepolia.drpc.org',
+        blockExplorer: 'https://sepolia-explorer.arbitrum.io',
+        chain: arbitrumSepolia,
+        chainId: 421614,
+        nativeCurrency: 'ETH'
     }
 } as const;
 
 const getNetwork = (): NetworkType => {
-
-    const network = 'avalancheFuji' as NetworkType;
+    const args = getArgs();
+    const network = args.network as NetworkType;
 
     if (network && !(network in networkConfigs)) {
         throw new Error(`Invalid network: ${network}. Must be one of: ${Object.keys(networkConfigs).join(', ')}`);
@@ -100,6 +118,24 @@ export const walletClient = createWalletClient({
     account,
 }) as WalletClient;
 
+// Multi-chain client factory
+export function createClientForNetwork(networkType: NetworkType) {
+    const config = networkConfigs[networkType];
+    const baseConfig = {
+        chain: config.chain,
+        transport: http(config.rpcProviderUrl),
+    };
+
+    return {
+        publicClient: createPublicClient(baseConfig),
+        walletClient: createWalletClient({
+            ...baseConfig,
+            account,
+        }) as WalletClient,
+        networkInfo: config
+    };
+}
+
 export function validateEnvironment(): void {
     try {
 
@@ -116,6 +152,8 @@ export function validateEnvironment(): void {
             getNetwork()
             console.error(`✅ Asetta MCP environment configuration valid (${network})`);
             console.error(`📍 RPC URL: ${networkInfo.rpcProviderUrl}`);
+            console.error(`📍 Chain ID: ${networkInfo.chainId}`);
+            console.error(`📍 Native Currency: ${networkInfo.nativeCurrency}`);
             getAccount()
             console.error(`📍 Account: ${account.address}`);
         }
@@ -129,3 +167,6 @@ export function validateEnvironment(): void {
         throw error;
     }
 }
+
+// Export network configs for external use
+export { networkConfigs, type NetworkType };

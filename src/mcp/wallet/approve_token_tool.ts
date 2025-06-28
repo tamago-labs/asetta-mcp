@@ -2,6 +2,7 @@ import { z } from "zod";
 import { WalletAgent } from "../../agent/wallet"
 import { type McpTool } from "../../types";
 import { parseEther, Address, formatEther, maxUint256 } from "viem";
+import { type NetworkType } from "../../config";
 
 export const ApproveTokenTool: McpTool = {
     name: "asetta_approve_token",
@@ -19,11 +20,17 @@ export const ApproveTokenTool: McpTool = {
             .describe("Amount to approve (optional, defaults to unlimited)"),
         unlimited: z.boolean()
             .default(true)
-            .describe("Set unlimited approval (recommended for convenience)")
+            .describe("Set unlimited approval (recommended for convenience)"),
+        network: z.enum(['avalancheFuji', 'ethereumSepolia', 'arbitrumSepolia'])
+            .optional()
+            .describe("Network to use (optional, defaults to configured network)")
     },
     handler: async (agent: WalletAgent, input: Record<string, any>) => {
         try {
-            await agent.connect();
+            const networkType = input.network as NetworkType;
+            const walletAgent = networkType ? new WalletAgent(networkType) : agent;
+            
+            await walletAgent.connect();
 
             let tokenAddress = input.token_address as Address;
             const spender = input.spender as Address;
@@ -72,22 +79,22 @@ export const ApproveTokenTool: McpTool = {
 
             // Get current allowance and token info
             const [currentAllowance, symbol, balance] = await Promise.all([
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'allowance',
-                    args: [agent.account.address, spender]
+                    args: [walletAgent.account.address, spender]
                 }) as Promise<bigint>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'symbol'
                 }) as Promise<string>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'balanceOf',
-                    args: [agent.account.address]
+                    args: [walletAgent.account.address]
                 }) as Promise<bigint>
             ]);
 
@@ -106,7 +113,7 @@ export const ApproveTokenTool: McpTool = {
                     },
                     wallet_info: {
                         balance: formatEther(balance),
-                        address: agent.account.address
+                        address: walletAgent.account.address
                     },
                     next_steps: [
                         "✅ Approval already sufficient",
@@ -117,31 +124,31 @@ export const ApproveTokenTool: McpTool = {
             }
 
             // Simulate approval first to catch errors and get accurate gas estimate
-            const { request, result } = await agent.publicClient.simulateContract({
+            const { request, result } = await walletAgent.publicClient.simulateContract({
                 address: tokenAddress,
                 abi: erc20Abi,
                 functionName: 'approve',
                 args: [spender, amount],
-                account: agent.account.address
+                account: walletAgent.account.address
             });
 
             console.error(`✅ Approval simulation successful. Proceeding with transaction...`);
 
             // Send approval transaction using the simulated request
-            const txHash = await agent.walletClient.writeContract(request);
+            const txHash = await walletAgent.walletClient.writeContract(request);
 
             // Wait for confirmation
-            const receipt = await agent.publicClient.waitForTransactionReceipt({
+            const receipt = await walletAgent.publicClient.waitForTransactionReceipt({
                 hash: txHash,
                 confirmations: 1
             });
 
             // Get new allowance
-            const newAllowance = await agent.publicClient.readContract({
+            const newAllowance = await walletAgent.publicClient.readContract({
                 address: tokenAddress,
                 abi: erc20Abi,
                 functionName: 'allowance',
-                args: [agent.account.address, spender]
+                args: [walletAgent.account.address, spender]
             }) as bigint;
 
             return {
@@ -149,7 +156,7 @@ export const ApproveTokenTool: McpTool = {
                 message: `✅ Successfully approved ${symbol} spending for smart contract`,
                 transaction_details: {
                     transaction_hash: txHash,
-                    from: agent.account.address,
+                    from: walletAgent.account.address,
                     token_address: tokenAddress,
                     token_symbol: symbol,
                     spender: spender,
@@ -166,11 +173,13 @@ export const ApproveTokenTool: McpTool = {
                 },
                 wallet_info: {
                     balance: formatEther(balance),
-                    address: agent.account.address
+                    address: walletAgent.account.address
                 },
                 network_info: {
-                    network: agent.network,
-                    explorer_url: `${agent.networkInfo.blockExplorer}/tx/${txHash}`
+                    network: walletAgent.network,
+                    chain_id: walletAgent.networkInfo.chainId,
+                    native_currency: walletAgent.networkInfo.nativeCurrency,
+                    explorer_url: `${walletAgent.networkInfo.blockExplorer}/tx/${txHash}`
                 },
                 next_steps: [
                     "✅ Token approval confirmed on blockchain", 

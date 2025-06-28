@@ -2,6 +2,7 @@ import { z } from "zod";
 import { WalletAgent } from "../../agent/wallet";
 import { type McpTool } from "../../types";
 import { Address, formatEther } from "viem";
+import { type NetworkType } from "../../config";
 
 export const GetTransactionHistoryTool: McpTool = {
     name: "asetta_get_transaction_history",
@@ -15,17 +16,24 @@ export const GetTransactionHistoryTool: McpTool = {
             .min(1)
             .max(100)
             .default(20)
-            .describe("Number of transactions to retrieve (max 100)")
+            .describe("Number of transactions to retrieve (max 100)"),
+        network: z.enum(['avalancheFuji', 'ethereumSepolia', 'arbitrumSepolia'])
+            .optional()
+            .describe("Network to check (optional, defaults to configured network)")
     },
     handler: async (agent: WalletAgent, input: Record<string, any>) => {
         try {
-            await agent.connect();
+            const networkType = input.network as NetworkType;
+            const walletAgent = networkType ? new WalletAgent(networkType) : agent;
+            
+            await walletAgent.connect();
 
-            const targetAddress = (input.account_address || agent.account.address) as Address;
+            const targetAddress = (input.account_address || walletAgent.account.address) as Address;
             const limit = input.limit || 20;
+            const nativeCurrency = walletAgent.networkInfo.nativeCurrency;
 
             // Get current block number
-            const currentBlock = await agent.publicClient.getBlockNumber();
+            const currentBlock = await walletAgent.publicClient.getBlockNumber();
             const fromBlock = currentBlock - BigInt(10000); // Look back ~10k blocks
 
             // Get recent blocks to find transactions
@@ -35,7 +43,7 @@ export const GetTransactionHistoryTool: McpTool = {
             for (let i = 0; i < blocksToCheck && recentTransactions.length < limit; i++) {
                 try {
                     const blockNumber = currentBlock - BigInt(i);
-                    const block = await agent.publicClient.getBlock({
+                    const block = await walletAgent.publicClient.getBlock({
                         blockNumber,
                         includeTransactions: true
                     });
@@ -49,7 +57,7 @@ export const GetTransactionHistoryTool: McpTool = {
 
                                 // Get transaction receipt for more details
                                 try {
-                                    const receipt = await agent.publicClient.getTransactionReceipt({
+                                    const receipt = await walletAgent.publicClient.getTransactionReceipt({
                                         hash: tx.hash
                                     });
 
@@ -111,8 +119,8 @@ export const GetTransactionHistoryTool: McpTool = {
                 message: `✅ Retrieved ${recentTransactions.length} recent transactions for ${targetAddress}`,
                 account_info: {
                     address: targetAddress,
-                    network: agent.network,
-                    is_own_wallet: targetAddress.toLowerCase() === agent.account.address.toLowerCase(),
+                    network: walletAgent.network,
+                    is_own_wallet: targetAddress.toLowerCase() === walletAgent.account.address.toLowerCase(),
                     blocks_searched: blocksToCheck,
                     from_block: fromBlock.toString(),
                     to_block: currentBlock.toString()
@@ -122,24 +130,26 @@ export const GetTransactionHistoryTool: McpTool = {
                     sent_transactions: sentTransactions.length,
                     received_transactions: receivedTransactions.length,
                     contract_interactions: contractInteractions.length,
-                    total_eth_sent: `${totalSent.toFixed(6)} AVAX`,
-                    total_eth_received: `${totalReceived.toFixed(6)} AVAX`,
-                    net_eth_flow: `${(totalReceived - totalSent).toFixed(6)} AVAX`
+                    total_eth_sent: `${totalSent.toFixed(6)} ${nativeCurrency}`,
+                    total_eth_received: `${totalReceived.toFixed(6)} ${nativeCurrency}`,
+                    net_eth_flow: `${(totalReceived - totalSent).toFixed(6)} ${nativeCurrency}`
                 },
                 transactions: recentTransactions.map(tx => ({
                     ...tx,
-                    explorer_url: `${agent.networkInfo.blockExplorer}/tx/${tx.hash}`,
+                    explorer_url: `${walletAgent.networkInfo.blockExplorer}/tx/${tx.hash}`,
                     age: tx.timestamp ? getTimeAgo(new Date(tx.timestamp)) : 'Unknown'
                 })),
                 network_info: {
-                    network: agent.network,
-                    block_explorer: agent.networkInfo.blockExplorer,
+                    network: walletAgent.network,
+                    chain_id: walletAgent.networkInfo.chainId,
+                    native_currency: nativeCurrency,
+                    block_explorer: walletAgent.networkInfo.blockExplorer,
                     current_block: currentBlock.toString()
                 },
                 next_steps: recentTransactions.length === 0
                     ? [
                         "🔍 No recent transactions found",
-                        "💡 Start by funding your wallet with AVAX",
+                        `💡 Start by funding your wallet with ${nativeCurrency}`,
                         "🎨 Begin registering RWA assets on Asetta"
                     ]
                     : [

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { WalletAgent } from "../../agent/wallet";
 import { type McpTool } from "../../types";
 import { parseEther, Address, formatEther } from "viem"; 
+import { type NetworkType } from "../../config";
 
 export const SendTokenTool: McpTool = {
     name: "asetta_send_token",
@@ -18,11 +19,17 @@ export const SendTokenTool: McpTool = {
             .describe("Amount of tokens to send"),
         memo: z.string()
             .optional()
-            .describe("Optional memo for the transaction")
+            .describe("Optional memo for the transaction"),
+        network: z.enum(['avalancheFuji', 'ethereumSepolia', 'arbitrumSepolia'])
+            .optional()
+            .describe("Network to use (optional, defaults to configured network)")
     },
     handler: async (agent: WalletAgent, input: Record<string, any>) => {
         try {
-            await agent.connect();
+            const networkType = input.network as NetworkType;
+            const walletAgent = networkType ? new WalletAgent(networkType) : agent;
+            
+            await walletAgent.connect();
 
             const destination = input.destination as Address;
             let tokenAddress = input.token_address as Address;
@@ -66,18 +73,18 @@ export const SendTokenTool: McpTool = {
 
             // Get token info
             const [balance, symbol, decimals] = await Promise.all([
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'balanceOf',
-                    args: [agent.account.address]
+                    args: [walletAgent.account.address]
                 }) as Promise<bigint>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'symbol'
                 }) as Promise<string>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'decimals'
@@ -89,21 +96,21 @@ export const SendTokenTool: McpTool = {
             }
 
             // Simulate token transfer first to catch errors and get accurate gas estimate
-            const { request, result } = await agent.publicClient.simulateContract({
+            const { request, result } = await walletAgent.publicClient.simulateContract({
                 address: tokenAddress,
                 abi: erc20Abi,
                 functionName: 'transfer',
                 args: [destination, amount],
-                account: agent.account.address
+                account: walletAgent.account.address
             });
 
             console.error(`✅ Transfer simulation successful. Proceeding with transaction...`);
 
             // Send token transfer transaction using the simulated request
-            const txHash = await agent.walletClient.writeContract(request);
+            const txHash = await walletAgent.walletClient.writeContract(request);
 
             // Wait for confirmation
-            const receipt = await agent.publicClient.waitForTransactionReceipt({
+            const receipt = await walletAgent.publicClient.waitForTransactionReceipt({
                 hash: txHash,
                 confirmations: 1
             });
@@ -113,7 +120,7 @@ export const SendTokenTool: McpTool = {
                 message: `✅ Successfully sent ${input.amount} ${symbol} to ${destination}`,
                 transaction_details: {
                     transaction_hash: txHash,
-                    from: agent.account.address,
+                    from: walletAgent.account.address,
                     to: destination,
                     token_address: tokenAddress,
                     token_symbol: symbol,
@@ -131,8 +138,10 @@ export const SendTokenTool: McpTool = {
                     decimals: decimals
                 },
                 network_info: {
-                    network: agent.network,
-                    explorer_url: `${agent.networkInfo.blockExplorer}/tx/${txHash}`
+                    network: walletAgent.network,
+                    chain_id: walletAgent.networkInfo.chainId,
+                    native_currency: walletAgent.networkInfo.nativeCurrency,
+                    explorer_url: `${walletAgent.networkInfo.blockExplorer}/tx/${txHash}`
                 },
                 next_steps: [
                     "✅ Token transfer confirmed on blockchain",

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { WalletAgent } from "../../agent/wallet";
 import { type McpTool } from "../../types";
 import { Address, formatEther } from "viem";
+import { type NetworkType } from "../../config";
 
 export const GetTokenInfoTool: McpTool = {
     name: "asetta_get_token_info",
@@ -13,14 +14,20 @@ export const GetTokenInfoTool: McpTool = {
         account_address: z.string()
             .regex(/^0x[0-9a-fA-F]{40}$/)
             .optional()
-            .describe("Address to check balance for (optional, defaults to wallet address)")
+            .describe("Address to check balance for (optional, defaults to wallet address)"),
+        network: z.enum(['avalancheFuji', 'ethereumSepolia', 'arbitrumSepolia'])
+            .optional()
+            .describe("Network to check (optional, defaults to configured network)")
     },
     handler: async (agent: WalletAgent, input: Record<string, any>) => {
         try {
-            await agent.connect();
+            const networkType = input.network as NetworkType;
+            const walletAgent = networkType ? new WalletAgent(networkType) : agent;
+            
+            await walletAgent.connect();
 
             let tokenAddress = input.token_address as Address;
-            const accountAddress = (input.account_address || agent.account.address) as Address;
+            const accountAddress = (input.account_address || walletAgent.account.address) as Address;
 
             // Extended ERC20 ABI for comprehensive token info
             const erc20Abi = [
@@ -63,27 +70,27 @@ export const GetTokenInfoTool: McpTool = {
 
             // Get basic token information
             const [name, symbol, decimals, totalSupply, balance] = await Promise.all([
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'name'
                 }) as Promise<string>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'symbol'
                 }) as Promise<string>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'decimals'
                 }) as Promise<number>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'totalSupply'
                 }) as Promise<bigint>,
-                agent.publicClient.readContract({
+                walletAgent.publicClient.readContract({
                     address: tokenAddress,
                     abi: erc20Abi,
                     functionName: 'balanceOf',
@@ -92,7 +99,7 @@ export const GetTokenInfoTool: McpTool = {
             ]);
 
             // Get contract bytecode to verify it's a contract
-            const bytecode = await agent.publicClient.getBytecode({
+            const bytecode = await walletAgent.publicClient.getBytecode({
                 address: tokenAddress
             });
 
@@ -133,7 +140,7 @@ export const GetTokenInfoTool: McpTool = {
                     balance_wei: balance.toString(),
                     percentage_of_supply: balancePercentage.toFixed(6) + "%",
                     is_holder: balance > 0,
-                    is_own_wallet: accountAddress.toLowerCase() === agent.account.address.toLowerCase()
+                    is_own_wallet: accountAddress.toLowerCase() === walletAgent.account.address.toLowerCase()
                 },
                 supply_analysis: {
                     total_supply_formatted: totalSupplyFormatted,
@@ -143,10 +150,12 @@ export const GetTokenInfoTool: McpTool = {
                             balancePercentage > 0 ? "small_holder" : "non_holder"
                 },
                 network_info: {
-                    network: agent.network,
-                    block_explorer: agent.networkInfo.blockExplorer,
-                    token_explorer_url: `${agent.networkInfo.blockExplorer}/token/${tokenAddress}`,
-                    account_explorer_url: `${agent.networkInfo.blockExplorer}/token/${tokenAddress}?a=${accountAddress}`
+                    network: walletAgent.network,
+                    chain_id: walletAgent.networkInfo.chainId,
+                    native_currency: walletAgent.networkInfo.nativeCurrency,
+                    block_explorer: walletAgent.networkInfo.blockExplorer,
+                    token_explorer_url: `${walletAgent.networkInfo.blockExplorer}/token/${tokenAddress}`,
+                    account_explorer_url: `${walletAgent.networkInfo.blockExplorer}/token/${tokenAddress}?a=${accountAddress}`
                 },
                 operational_status: {
                     has_balance: balance > 0,
@@ -156,7 +165,7 @@ export const GetTokenInfoTool: McpTool = {
                     ? [
                         `💰 Acquire ${symbol} tokens to use for RWA tokenization`,
                         "⚠️ Verify token legitimacy before using",
-                        `🔍 View token details on ${agent.networkInfo.blockExplorer}`,
+                        `🔍 View token details on ${walletAgent.networkInfo.blockExplorer}`,
                         "💡 Use asetta_send_token to receive tokens from others"
                     ]
                     : [
