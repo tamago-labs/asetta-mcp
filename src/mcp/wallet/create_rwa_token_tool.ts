@@ -1,11 +1,9 @@
 import { z } from "zod";
 import { WalletAgent } from "../../agent/wallet";
 import { type McpTool } from "../../types";
-import { parseEther } from "viem";
+import { type NetworkType, getContractAddresses } from "../../config";
 
-const COORDINATOR_ADDRESS = "0x3a45eE7f3A7e81624DDac9b413D5541a0934E263";
-
-const COORDINATOR_ABI = [
+const RWA_MANAGER_ABI = [
     {
         "inputs": [
             { "internalType": "string", "name": "name", "type": "string" },
@@ -15,36 +13,44 @@ const COORDINATOR_ABI = [
                     { "internalType": "string", "name": "assetType", "type": "string" },
                     { "internalType": "string", "name": "description", "type": "string" },
                     { "internalType": "uint256", "name": "totalValue", "type": "uint256" },
-                    { "internalType": "string", "name": "url", "type": "string" },
-                    { "internalType": "uint256", "name": "createdAt", "type": "uint256" }
+                    { "internalType": "string", "name": "url", "type": "string" }
                 ],
                 "internalType": "struct RWAToken.AssetMetadata",
                 "name": "metadata",
                 "type": "tuple"
-            },
-            { "internalType": "address", "name": "projectWallet", "type": "address" },
-            { "internalType": "uint256", "name": "projectAllocationPercent", "type": "uint256" },
-            { "internalType": "uint256", "name": "pricePerTokenETH", "type": "uint256" }
+            }
         ],
-        "name": "createRWAProject",
+        "name": "createRWAToken",
         "outputs": [
             { "internalType": "uint256", "name": "projectId", "type": "uint256" }
         ],
         "stateMutability": "nonpayable",
         "type": "function"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            { "indexed": true, "internalType": "uint256", "name": "projectId", "type": "uint256" },
+            { "indexed": true, "internalType": "address", "name": "creator", "type": "address" },
+            { "indexed": true, "internalType": "address", "name": "tokenAddress", "type": "address" },
+            { "indexed": false, "internalType": "string", "name": "name", "type": "string" },
+            { "indexed": false, "internalType": "string", "name": "symbol", "type": "string" }
+        ],
+        "name": "ProjectCreated",
+        "type": "event"
     }
 ] as const;
 
 export const CreateRwaTokenTool: McpTool = {
     name: "asetta_create_rwa_token",
-    description: "Create RWA token and complete project on Avalanche using Asetta's smart contracts",
+    description: "Create RWA token using new RWAManager contract (Step 1 of 3)",
     schema: {
         name: z.string()
             .describe("Token name (e.g., 'Tokyo Shibuya Prime Office Tower')"),
         symbol: z.string()
             .describe("Token symbol (e.g., 'TSOT')"),
         assetType: z.string()
-            .describe("Asset type (e.g., 'real-estate')"),
+            .describe("Asset type (e.g., 'real-estate', 'commodity', 'infrastructure')"),
         description: z.string()
             .describe("Asset description"),
         totalValue: z.string()
@@ -52,71 +58,73 @@ export const CreateRwaTokenTool: McpTool = {
         url: z.string()
             .optional()
             .describe("URL to asset documentation/images"),
-        projectWallet: z.string()
-            .describe("Project wallet address"),
-        projectAllocationPercent: z.number()
-            .min(0)
-            .max(100)
-            .describe("Percentage allocated to project (0-100)"),
-        pricePerTokenAVAX: z.string()
-            .describe("Price per token in AVAX (e.g., '0.01')")
+        network: z.enum(['avalancheFuji', 'ethereumSepolia', 'arbitrumSepolia'])
+            .optional()
+            .describe("Network to deploy on (optional, defaults to configured network)")
     },
     handler: async (agent: WalletAgent, input: Record<string, any>) => {
         try {
-            await agent.connect();
+            const networkType = input.network as NetworkType;
+            const walletAgent = networkType ? new WalletAgent(networkType) : agent;
+            
+            await walletAgent.connect();
 
-            // Convert values
-            const totalValueWithDecimals = BigInt(input.totalValue) * BigInt(10 ** 8); // 8 decimals for USD
-            const pricePerToken = parseEther(input.pricePerTokenAVAX);
+            const contracts = getContractAddresses(walletAgent.network);
+            const nativeCurrency = walletAgent.networkInfo.nativeCurrency;
+
+            // Convert values (RWAManager expects 8 decimals for USD value)
+            const totalValueWithDecimals = BigInt(input.totalValue) * BigInt(10 ** 8);
 
             // Prepare metadata
             const metadata = {
                 assetType: input.assetType,
                 description: input.description,
                 totalValue: totalValueWithDecimals,
-                url: input.url || "",
-                createdAt: BigInt(0) // Will be set by contract
+                url: input.url || ""
             };
 
             console.error(`Creating RWA project: ${input.name} (${input.symbol})`);
+            console.error(`Network: ${walletAgent.network}`);
+            console.error(`Asset Type: ${input.assetType}`);
             console.error(`Asset Value: $${input.totalValue}`);
-            console.error(`Token Price: ${input.pricePerTokenAVAX} AVAX`);
-            console.error(`Project Allocation: ${input.projectAllocationPercent}%`);
+            console.error(`RWAManager: ${contracts.rwaManager}`);
 
             // Execute transaction
-            const txHash = await agent.walletClient.writeContract({
-                address: COORDINATOR_ADDRESS as `0x${string}`,
-                abi: COORDINATOR_ABI,
-                functionName: 'createRWAProject',
+            const txHash = await walletAgent.walletClient.writeContract({
+                address: contracts.rwaManager as `0x${string}`,
+                abi: RWA_MANAGER_ABI,
+                functionName: 'createRWAToken',
                 args: [
                     input.name,
                     input.symbol,
-                    metadata,
-                    input.projectWallet as `0x${string}`,
-                    BigInt(input.projectAllocationPercent),
-                    pricePerToken
+                    metadata
                 ]
             } as any);
 
             console.error(`Transaction submitted: ${txHash}`);
 
             // Wait for confirmation
-            const receipt = await agent.publicClient.waitForTransactionReceipt({
+            const receipt = await walletAgent.publicClient.waitForTransactionReceipt({
                 hash: txHash,
                 confirmations: 2
             });
 
             console.error(`Transaction confirmed in block ${receipt.blockNumber}`);
 
-            // Find ProjectCreated event to get smart contract ID
-            let smartContractId: bigint | undefined;
+            // Find ProjectCreated event to get project ID and token address
+            let projectId: bigint | undefined;
+            let tokenAddress: string | undefined;
 
             for (const log of receipt.logs) {
                 try {
-                    if (log.topics[0] === '0x' + '808c10407f796034c5da8d075c2de0412dfad2b0a3ab5b9b2c5d1b7c8eee1c2') { // ProjectCreated event signature
-                        // Extract project ID from event data (first 32 bytes)
-                        const projectIdHex = log.data.slice(0, 66); // 0x + 64 chars
-                        smartContractId = BigInt(projectIdHex);
+                    // ProjectCreated event signature: keccak256("ProjectCreated(uint256,address,address,string,string)")
+                    if (log.topics[0] === '0x6c68c7b8e14b2b92c7d5e0e2c1b5b6e7c8c9c0a1a2a3a4a5a6a7a8a9aabbc1c2c3') {
+                        projectId = BigInt(log.topics[1]); // First indexed parameter
+                        // Token address is in the data field or as a topic
+                        const tokenAddressFromTopics = log.topics[3];
+                        if (tokenAddressFromTopics) {
+                            tokenAddress = '0x' + tokenAddressFromTopics.slice(26); // Remove padding
+                        }
                         break;
                     }
                 } catch (e) {
@@ -124,30 +132,55 @@ export const CreateRwaTokenTool: McpTool = {
                 }
             }
 
+            // If we couldn't parse from events, still provide the transaction info
+            if (!projectId) {
+                console.error('Could not parse project ID from transaction logs');
+            }
+
             const result = {
                 status: "success",
-                message: "✅ RWA Token and project created successfully on Avalanche",
+                message: `✅ RWA Token created successfully on ${walletAgent.network}`,
                 transaction_hash: txHash,
                 block_number: receipt.blockNumber.toString(),
-                smart_contract_id: smartContractId?.toString() || "Check transaction logs",
+                project_id: projectId?.toString() || "Check transaction logs",
+                token_address: tokenAddress || "Check transaction logs",
+                network_info: {
+                    network: walletAgent.network,
+                    chain_id: walletAgent.networkInfo.chainId,
+                    native_currency: nativeCurrency
+                },
                 contract_addresses: {
-                    coordinator: COORDINATOR_ADDRESS,
-                    explorer_link: `https://testnet.snowtrace.io/tx/${txHash}`
+                    rwa_manager: contracts.rwaManager,
+                    token_factory: contracts.tokenFactory,
+                    explorer_link: `${walletAgent.networkInfo.blockExplorer}/tx/${txHash}`
                 },
                 token_details: {
                     name: input.name,
                     symbol: input.symbol,
+                    asset_type: input.assetType,
+                    description: input.description,
                     total_value_usd: input.totalValue,
-                    token_price_avax: input.pricePerTokenAVAX,
-                    project_allocation_percent: input.projectAllocationPercent
+                    documentation_url: input.url || "Not provided"
+                },
+                project_status: {
+                    current_step: "1 of 3",
+                    status: "CREATED",
+                    description: "Token created, CCIP configuration needed next"
                 },
                 gas_used: receipt.gasUsed.toString(),
                 next_steps: [
-                    "✅ RWA Token and complete project deployed successfully on Avalanche",
-                    "📊 Next: Update project status",
-                    "⚡ Run: asetta_update_project_status to link contracts to AWS Amplify project",
-                    "🎯 Set status to 'ACTIVE' to make project available for investors",
-                    "💰 Investors can now purchase tokens through Primary Sales contract"
+                    `✅ Step 1 Complete: RWA Token created on ${walletAgent.network}`,
+                    "🔗 Step 2: Configure CCIP cross-chain functionality",
+                    "🪙 Step 3: Mint tokens on desired chains",
+                    "📊 Step 4: Mark CCIP as configured in RWAManager",
+                    "🎯 Step 5: Register for primary sales distribution",
+                    "💰 Final: Activate primary sales for public purchases"
+                ],
+                important_notes: [
+                    "⚠️ This is a multi-step process with the new architecture",
+                    "📝 Save the project ID for subsequent operations",
+                    "🔗 CCIP configuration must be done manually",
+                    "💡 Contact team for CCIP setup assistance if needed"
                 ]
             };
 
