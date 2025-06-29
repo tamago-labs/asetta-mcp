@@ -38,23 +38,23 @@ const getArgs = () =>
 const CONTRACT_ADDRESSES = {
     avalancheFuji: {
         mockUSDC: "0x5067e9a9154A2EA674DEf639de5e98F238824039",
-        rwaManager: "0xD55ADE8667a99a6d89681f00E3e155A7f945CB7a",
-        tokenFactory: "0xB82FBa76846D1aCC3e8A508deCDA74a3d191118e",
-        primaryDistribution: "0x8E426864826bC3808f6b2A12aE606a14B52903cA",
+        rwaManager: "0x6ee904a0Ff97b5682E80660Bf2Aca280D18aB5F3",
+        tokenFactory: "0xEc5003E8451EC488ea1e1a7142A38e77a5082fCf",
+        primaryDistribution: "0x9304F30b1AEfeCB43F86fd5841C6ea75BD0F2529",
         rfq: "0x307992307C89216b1079C7c5Cbc4F51005b1472D"
     },
     ethereumSepolia: {
         mockUSDC: "0xf2260B00250c772CB64606dBb88d9544F709308C",
-        rwaManager: "0x61ad3Fe6B44Bfbbcec39c9FaD566538c894b6471",
-        tokenFactory: "0x576430Ecadbd9729B32a4cA9Fed9F38331273924",
-        primaryDistribution: "0x553588e084604a2677e10E46ea0a8A8e9D859146",
+        rwaManager: "0x9682DaBf26831523B21759A50b0a45832f82DBa3",
+        tokenFactory: "0x6fdB032668F1F856fbC2e9F5Df348938aFBFBE17",
+        primaryDistribution: "0xf309011fbf013C352849Cd4b5C85E71cC69a1EBF",
         rfq: "0x42209A0A2a3D80Ad48B7D25fC6a61ad355901484"
     },
     arbitrumSepolia: {
         mockUSDC: "0x16EE94e3C07B24EbA6067eb9394BA70178aAc4c0",
-        rwaManager: "0x553588e084604a2677e10E46ea0a8A8e9D859146",
-        tokenFactory: "0xFa15adECD1CC94bd17cf48DD3b41F066FE2812a7",
-        primaryDistribution: "0x65e38111d8e2561aDC0E2EA1eeA856E6a43dC892",
+        rwaManager: "0x4fd5Ae48A869c5ec0214CB050D2D713433515D8d",
+        tokenFactory: "0xe5209A4f622C6eD2C158dcCcdDB69B05f9D0E4E0",
+        primaryDistribution: "0xA657b300009802Be7c88617128545534aCA12dbe",
         rfq: "0x61ad3Fe6B44Bfbbcec39c9FaD566538c894b6471"
     }
 } as const;
