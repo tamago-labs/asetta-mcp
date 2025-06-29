@@ -2,6 +2,7 @@ import { z } from "zod";
 import { WalletAgent } from "../../agent/wallet";
 import { type McpTool } from "../../types";
 import { type NetworkType, getContractAddresses } from "../../config";
+import { decodeEventLog, parseAbiItem } from 'viem';
 
 const RWA_MANAGER_ABI = [
     {
@@ -59,7 +60,7 @@ const RWA_MANAGER_ABI = [
             }
         ],
         "stateMutability": "nonpayable"
-    }, 
+    },
     {
         "type": "event",
         "name": "ProjectCreated",
@@ -132,7 +133,7 @@ export const CreateRwaTokenTool: McpTool = {
 
             // Convert values (RWAManager expects 8 decimals for USD value)
             const totalValueWithDecimals = BigInt(input.totalValue) * BigInt(10 ** 8);
- 
+
             // Prepare metadata
             const metadata = {
                 assetType: input.assetType,
@@ -176,19 +177,18 @@ export const CreateRwaTokenTool: McpTool = {
 
             for (const log of receipt.logs) {
                 try {
-                    // ProjectCreated event signature: keccak256("ProjectCreated(uint256,address,address,string,string)")
-                    if (log.topics[0] === '0x6c68c7b8e14b2b92c7d5e0e2c1b5b6e7c8c9c0a1a2a3a4a5a6a7a8a9aabbc1c2c3') {
-                        projectId = BigInt(log.topics[1]); // First indexed parameter
-                        // Token address is in the data field or as a topic
-                        const tokenAddressFromTopics = log.topics[3];
-                        if (tokenAddressFromTopics) {
-                            tokenAddress = '0x' + tokenAddressFromTopics.slice(26); // Remove padding
-                        }
+                    const { eventName, args } = decodeEventLog({
+                        abi: RWA_MANAGER_ABI,
+                        data: log.data,
+                        topics: log.topics,
+                    });
+
+                    if (eventName === 'ProjectCreated') {
+                        projectId = args.projectId as bigint;
+                        tokenAddress = args.tokenAddress as `0x${string}`;
                         break;
                     }
-                } catch (e) {
-                    // Continue searching
-                }
+                } catch {/* not this event */ }
             }
 
             // If we couldn't parse from events, still provide the transaction info
