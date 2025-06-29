@@ -5,39 +5,97 @@ import { type NetworkType, getContractAddresses } from "../../config";
 
 const RWA_MANAGER_ABI = [
     {
+        "type": "function",
+        "name": "createRWAToken",
         "inputs": [
-            { "internalType": "string", "name": "name", "type": "string" },
-            { "internalType": "string", "name": "symbol", "type": "string" },
             {
-                "components": [
-                    { "internalType": "string", "name": "assetType", "type": "string" },
-                    { "internalType": "string", "name": "description", "type": "string" },
-                    { "internalType": "uint256", "name": "totalValue", "type": "uint256" },
-                    { "internalType": "string", "name": "url", "type": "string" }
-                ],
-                "internalType": "struct RWAToken.AssetMetadata",
+                "name": "name",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
+                "name": "symbol",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
                 "name": "metadata",
-                "type": "tuple"
+                "type": "tuple",
+                "internalType": "struct RWAToken.AssetMetadata",
+                "components": [
+                    {
+                        "name": "assetType",
+                        "type": "string",
+                        "internalType": "string"
+                    },
+                    {
+                        "name": "description",
+                        "type": "string",
+                        "internalType": "string"
+                    },
+                    {
+                        "name": "totalValue",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "url",
+                        "type": "string",
+                        "internalType": "string"
+                    },
+                    {
+                        "name": "createdAt",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    }
+                ]
             }
         ],
-        "name": "createRWAToken",
         "outputs": [
-            { "internalType": "uint256", "name": "projectId", "type": "uint256" }
+            {
+                "name": "projectId",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
         ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
+        "stateMutability": "nonpayable"
+    }, 
     {
-        "anonymous": false,
-        "inputs": [
-            { "indexed": true, "internalType": "uint256", "name": "projectId", "type": "uint256" },
-            { "indexed": true, "internalType": "address", "name": "creator", "type": "address" },
-            { "indexed": true, "internalType": "address", "name": "tokenAddress", "type": "address" },
-            { "indexed": false, "internalType": "string", "name": "name", "type": "string" },
-            { "indexed": false, "internalType": "string", "name": "symbol", "type": "string" }
-        ],
+        "type": "event",
         "name": "ProjectCreated",
-        "type": "event"
+        "inputs": [
+            {
+                "name": "projectId",
+                "type": "uint256",
+                "indexed": true,
+                "internalType": "uint256"
+            },
+            {
+                "name": "creator",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            },
+            {
+                "name": "tokenAddress",
+                "type": "address",
+                "indexed": true,
+                "internalType": "address"
+            },
+            {
+                "name": "name",
+                "type": "string",
+                "indexed": false,
+                "internalType": "string"
+            },
+            {
+                "name": "symbol",
+                "type": "string",
+                "indexed": false,
+                "internalType": "string"
+            }
+        ],
+        "anonymous": false
     }
 ] as const;
 
@@ -66,7 +124,7 @@ export const CreateRwaTokenTool: McpTool = {
         try {
             const networkType = input.network as NetworkType;
             const walletAgent = networkType ? new WalletAgent(networkType) : agent;
-            
+
             await walletAgent.connect();
 
             const contracts = getContractAddresses(walletAgent.network);
@@ -74,13 +132,14 @@ export const CreateRwaTokenTool: McpTool = {
 
             // Convert values (RWAManager expects 8 decimals for USD value)
             const totalValueWithDecimals = BigInt(input.totalValue) * BigInt(10 ** 8);
-
+ 
             // Prepare metadata
             const metadata = {
                 assetType: input.assetType,
                 description: input.description,
                 totalValue: totalValueWithDecimals,
-                url: input.url || ""
+                url: input.url || "",
+                createdAt: BigInt(0) // Will be set by contract
             };
 
             console.error(`Creating RWA project: ${input.name} (${input.symbol})`);
@@ -170,18 +229,24 @@ export const CreateRwaTokenTool: McpTool = {
                 gas_used: receipt.gasUsed.toString(),
                 next_steps: [
                     `✅ Step 1 Complete: RWA Token created on ${walletAgent.network}`,
-                    "🔗 Step 2: Deploy token on other chains (if needed)",
-                    "📝 Note: If you want multi-chain support, deploy this token on other networks",
-                    "🌐 Step 3: Configure CCIP cross-chain functionality",
+                    "🔗 Step 2: For multi-chain support, deploy on other networks:",
+                    "   • Use asetta_create_rwa_token on each target network",
+                    "   • Recommended: ethereumSepolia, arbitrumSepolia, avalancheFuji",
+                    "🌐 Step 3: Configure CCIP for cross-chain transfers:",
+                    "   • Use asetta_deploy_ccip_pool on each network",
+                    "   • Use asetta_configure_ccip_roles on each network",
+                    "   • Use asetta_connect_ccip_chains to link networks",
+                    "   • Use asetta_validate_ccip_setup to verify configuration",
                     "📊 Step 4: Mark CCIP as configured in RWAManager",
                     "🎯 Step 5: Register for primary sales distribution",
                     "💰 Step 6: Activate primary sales for public purchases"
                 ],
                 important_notes: [
-                    "⚠️ This is a multi-step process with the new architecture",
-                    "📝 Save the project ID for subsequent operations",
-                    "🔗 CCIP configuration must be done manually",
-                    "💡 Contact team for CCIP setup assistance if needed"
+                    "⚠️ Multi-chain setup requires deploying on each target network",
+                    "📝 Save the project ID and token address for CCIP configuration",
+                    "🔗 CCIP tools are now available for cross-chain setup",
+                    "💡 Follow the exact sequence: Deploy → Pool → Roles → Connect → Validate",
+                    "🌐 Each network needs its own pool deployment and role configuration"
                 ]
             };
 
