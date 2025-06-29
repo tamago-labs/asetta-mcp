@@ -245,7 +245,24 @@ export const ValidateCCIPSetupTool: McpTool = {
                     "⚠️ Review role permissions and registry settings",
                     "🔄 Re-run validation after making corrections",
                     "📞 Contact support if issues persist"
-                ]
+                ],
+                next_steps: allChecksPassed ? {
+                    workflow_progress: "CCIP validation complete - ready for RWA workflow continuation",
+                    immediate_actions: [
+                        "🏷️ Mark CCIP as configured using asetta_mark_ccip_configured",
+                        "📝 Specify total token supply across all chains",
+                        "✅ This will update project status to CCIP_READY"
+                    ], 
+                    after_marking_ccip: [
+                        "📈 Register for primary sales with asetta_register_primary_sales",
+                        "🚀 Activate sales with asetta_activate_primary_sales",
+                        "💰 Your RWA tokens will be ready for public purchase!"
+                    ]
+                } : {
+                    required_fixes: "Fix validation failures before proceeding",
+                    cannot_proceed: "Must resolve all CCIP setup issues first",
+                    get_help: "Use asetta_configure_ccip for detailed setup instructions"
+                }
             };
             
         } catch (error: any) {
