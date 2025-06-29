@@ -25,6 +25,13 @@ import { ConfigureCCIPRolesTool } from "./ccip/configure_ccip_roles_tool";
 import { ConnectCCIPChainsTool } from "./ccip/connect_ccip_chains_tool";
 import { ValidateCCIPSetupTool } from "./ccip/validate_ccip_setup_tool";
 
+// RWA Token Tools
+import { MintRwaTokenTool } from "./rwa/mint_rwa_token_tool";
+import { TransferRwaTokenCrossChainTool } from "./rwa/transfer_rwa_cross_chain_tool";
+import { GetCrossChainFeeTool } from "./rwa/get_cross_chain_fee_tool";
+import { ApproveRouterTool } from "./rwa/approve_router_tool";
+import { GetChainSelectorsTool } from "./rwa/get_chain_selectors_tool";
+
 export const AsettaWalletTools = {
 
     // Basic wallet information and account management
@@ -60,7 +67,14 @@ export const AsettaWalletTools = {
     "DeployCCIPPoolTool": DeployCCIPPoolTool,                 // Deploy BurnMintTokenPool on a network
     "ConfigureCCIPRolesTool": ConfigureCCIPRolesTool,         // Configure roles and admin for CCIP
     "ConnectCCIPChainsTool": ConnectCCIPChainsTool,           // Connect pools across chains
-    "ValidateCCIPSetupTool": ValidateCCIPSetupTool            // Validate CCIP configuration
+    "ValidateCCIPSetupTool": ValidateCCIPSetupTool,           // Validate CCIP configuration
+
+    // RWA Token Operations
+    "MintRwaTokenTool": MintRwaTokenTool,                     // Mint RWA tokens
+    "TransferRwaTokenCrossChainTool": TransferRwaTokenCrossChainTool, // Cross-chain RWA token transfer
+    "GetCrossChainFeeTool": GetCrossChainFeeTool,             // Get cross-chain transfer fee
+    "ApproveRouterTool": ApproveRouterTool,                   // Approve CCIP router for transfers
+    "GetChainSelectorsTool": GetChainSelectorsTool            // Get CCIP chain selectors
 };
 
 export const AsettaApiTools = {

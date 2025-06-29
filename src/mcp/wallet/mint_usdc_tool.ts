@@ -79,19 +79,13 @@ export const MintUSDCTool: McpTool = {
             console.error(`💰 Minting ${input.amount} ${symbol} to ${recipient}`);
             console.error(`📍 Current balance: ${Number(currentBalance) / Math.pow(10, usdcDecimals)} ${symbol}`);
 
-            // Simulate mint transaction first
-            const { request } = await walletAgent.publicClient.simulateContract({
-                address: contracts.mockUSDC as Address,
+            // Execute mint transaction
+            const txHash = await walletAgent.walletClient.writeContract({
+                address: contracts.mockUSDC as `0x${string}`,
                 abi: mockUSDCAbi,
                 functionName: 'mint',
-                args: [recipient, amount],
-                account: walletAgent.account.address
-            });
-
-            console.error(`✅ Mint simulation successful. Proceeding with transaction...`);
-
-            // Execute mint transaction
-            const txHash = await walletAgent.walletClient.writeContract(request);
+                args: [recipient, amount]
+            } as any);
 
             // Wait for confirmation
             const receipt = await walletAgent.publicClient.waitForTransactionReceipt({
@@ -115,7 +109,7 @@ export const MintUSDCTool: McpTool = {
                 status: "success",
                 message: `✅ Successfully minted ${mintedAmount} ${symbol} to ${recipient}`,
                 transaction_details: {
-                    transaction_hash: txHash,
+                    transaction_hash: `${txHash}`,
                     from: walletAgent.account.address,
                     to: recipient,
                     token_address: contracts.mockUSDC,

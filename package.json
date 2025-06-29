@@ -47,16 +47,16 @@
         "url": "https://github.com/tamago-labs/asetta-mcp/issues"
     },
     "homepage": "https://www.asetta.xyz",
-    "dependencies": {
+    "dependencies": { 
         "@modelcontextprotocol/sdk": "^1.10.2",
-        "axios": "^1.10.0", 
-        "multiformats": "^9.9.0", 
+        "axios": "^1.10.0",
+        "multiformats": "^9.9.0",
         "viem": "^2.8.12",
         "zod": "^3.24.3"
     },
     "devDependencies": {
         "@types/jest": "^29.5.14",
-        "@types/node": "^22.15.2", 
+        "@types/node": "^22.15.2",
         "jest": "^29.7.0",
         "ts-jest": "^29.3.2",
         "ts-node": "^10.9.2",

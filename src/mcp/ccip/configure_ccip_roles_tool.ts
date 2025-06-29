@@ -76,8 +76,7 @@ export const ConfigureCCIPRolesTool: McpTool = {
             } catch (error) {
                 console.error('Failed to grant MINTER_ROLE:', error);
             }
-
-            console.error("MINTER_ROLE passed")
+ 
             
             try {
                 // Step 2: Grant BURNER_ROLE to pool 
@@ -89,8 +88,7 @@ export const ConfigureCCIPRolesTool: McpTool = {
             } catch (error) {
                 console.error('Failed to grant BURNER_ROLE:', error);
             }
-
-            console.error("BURNER_ROLE passed")
+ 
             
             try {
                 // Step 3: Register admin via getCCIPAdmin
@@ -101,8 +99,7 @@ export const ConfigureCCIPRolesTool: McpTool = {
             } catch (error) {
                 console.error('Failed to register admin:', error);
             }
-
-            console.error("Claim Admin passed")
+ 
             
             try {
                 // Step 4: Accept admin role
@@ -113,8 +110,7 @@ export const ConfigureCCIPRolesTool: McpTool = {
             } catch (error) {
                 console.error('Failed to accept admin role:', error);
             }
-
-            console.error("Accept Admin passed")
+ 
             
             try {
                 // Step 5: Link token to pool
