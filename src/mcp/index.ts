@@ -12,6 +12,7 @@ import { MintUSDCTool } from "./wallet/mint_usdc_tool";
 import { GetUSDCBalanceTool } from "./wallet/get_usdc_balance_tool";
 import { ConfigureCCIPTool } from "./wallet/configure_ccip_tool";
 import { MarkCCIPConfiguredTool } from "./wallet/mark_ccip_configured_tool";
+
 import { RegisterPrimarySalesTool } from "./wallet/register_primary_sales_tool";
 import { ActivatePrimarySalesTool } from "./wallet/activate_primary_sales_tool";
 import { GetProfileTool } from "./api/get_profile_tool";
@@ -58,10 +59,10 @@ export const AsettaWalletTools = {
     "CreateRwaTokenTool": CreateRwaTokenTool,                 // Create RWA token (new architecture)
 
     // RWA Workflow Tools (Multi-step process)
-    "ConfigureCCIPTool": ConfigureCCIPTool,                    // Configure CCIP cross-chain (Coming Soon)
-    "MarkCCIPConfiguredTool": MarkCCIPConfiguredTool,          // Mark CCIP as ready (Coming Soon)
-    "RegisterPrimarySalesTool": RegisterPrimarySalesTool,      // Register for sales (Coming Soon)
-    "ActivatePrimarySalesTool": ActivatePrimarySalesTool,      // Activate public sales (Coming Soon)
+    "ConfigureCCIPTool": ConfigureCCIPTool,                    // Configure CCIP cross-chain (Instructions)
+    "MarkCCIPConfiguredTool": MarkCCIPConfiguredTool,          // Mark CCIP as configured
+    "RegisterPrimarySalesTool": RegisterPrimarySalesTool,      // Register for sales
+    "ActivatePrimarySalesTool": ActivatePrimarySalesTool,      // Activate public sales
 
     // Setup CCIP
     "DeployCCIPPoolTool": DeployCCIPPoolTool,                 // Deploy BurnMintTokenPool on a network
